@@ -46,7 +46,7 @@ function AppInner() {
   const convBodyRef = useRef<HTMLDivElement>(null);
   const setBodyRef = useRef<HTMLDivElement>(null);
 
-  const bodyRefs: Record<Tab, React.RefObject<HTMLDivElement>> = {
+  const bodyRefs: Record<Tab, React.RefObject<HTMLDivElement | null>> = {
     downloader: dlBodyRef,
     converter: convBodyRef,
     settings: setBodyRef,

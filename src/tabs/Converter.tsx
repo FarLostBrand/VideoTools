@@ -40,7 +40,7 @@ type ConverterTab = "format" | "codec";
 const VIDEO_EXTS = ["mp4","mkv","mov","avi","webm","m4v","flv","ts","mts"];
 const ALL_EXTS   = [...VIDEO_EXTS, "mp3","aac","wav","flac","opus","m4a"];
 
-export default function Converter({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement> }) {
+export default function Converter({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement | null> }) {
   const { state, isRunning, start, cancel, clearLines } = useProcess("converter");
 
   const [tab, setTab]               = useState<ConverterTab>("format");

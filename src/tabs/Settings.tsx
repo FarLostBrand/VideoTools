@@ -25,7 +25,7 @@ function PathField({ label, settingKey, placeholder, hint }: PathFieldProps) {
 
 type UpdateStatus = "idle" | "checking" | "available" | "none" | "installing" | "error";
 
-export default function Settings({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement> }) {
+export default function Settings({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement | null> }) {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState("");

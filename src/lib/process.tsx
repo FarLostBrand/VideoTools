@@ -10,10 +10,6 @@ export interface ProcessState {
   background: boolean;
 }
 
-interface ProcessSlot {
-  state: ProcessState;
-  cancelHandle: CancelHandle | null;
-}
 
 type SlotKey = string;
 

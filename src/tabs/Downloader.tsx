@@ -15,7 +15,7 @@ const PRESETS = [
   { label: "WAV",   args: "-x --audio-format wav",                        title: "Extract audio as WAV" },
 ];
 
-export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement> }) {
+export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement | null> }) {
   const { state, isRunning, start, cancel, clearLines } = useProcess("downloader");
 
   const [url, setUrl]             = useState("");
