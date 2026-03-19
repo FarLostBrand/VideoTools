@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -14,11 +14,11 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-22.04
-            args: ''
+            args: ""
           - platform: macos-latest
-            args: '--target universal-apple-darwin'
+            args: "--target universal-apple-darwin"
           - platform: windows-latest
-            args: ''
+            args: ""
 
     runs-on: ${{ matrix.platform }}
 
@@ -49,7 +49,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
 
       - name: Install frontend dependencies
         run: npm install
@@ -62,15 +62,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'VideoTools ${{ github.ref_name }}'
+          releaseName: "VideoTools ${{ github.ref_name }}"
           releaseBody: |
-            ## What's new
-            See the commit history for changes.
-
             ## Installation
-            - **Linux**: Download the `.AppImage` or `.rpm`/`.deb`
+            - **Linux**: Download the `.AppImage` or `.rpm` / `.deb`
             - **macOS**: Download the `.dmg`
             - **Windows**: Download the `.msi` or `.exe`
           releaseDraft: false
           prerelease: false
+          updaterJsonPreferNsis: false
           args: ${{ matrix.args }}
