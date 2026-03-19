@@ -15,10 +15,13 @@ jobs:
         include:
           - platform: ubuntu-22.04
             args: ''
+            rust-targets: ''
           - platform: macos-latest
             args: '--target universal-apple-darwin'
+            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
           - platform: windows-latest
             args: ''
+            rust-targets: ''
 
     runs-on: ${{ matrix.platform }}
 
@@ -44,7 +47,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rust-targets }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -66,7 +69,7 @@ jobs:
           releaseBody: |
             ## Installation
             - **Linux**: Download the `.AppImage` or `.rpm` / `.deb`
-            - **macOS**: Download the `.dmg`
+            - **macOS**: Download the `.dmg` (universal — works on both Apple Silicon and Intel)
             - **Windows**: Download the `.msi` or `.exe`
           releaseDraft: false
           prerelease: false
@@ -123,25 +126,32 @@ jobs:
           MACOS_SIG=$(cat macos.tar.gz.sig)
           WIN_SIG=$(cat windows.exe.sig)
 
+          # Generate latest.json with all platform key variants Tauri v2 may look for
           python3 << PYEOF
           import json
+          macos = {
+            "signature": """${MACOS_SIG}""",
+            "url": "${BASE}/VideoTools_universal.app.tar.gz"
+          }
+          windows = {
+            "signature": """${WIN_SIG}""",
+            "url": "${BASE}/VideoTools_${VERSION}_x64-setup.exe"
+          }
+          linux = {
+            "signature": """${LINUX_SIG}""",
+            "url": "${BASE}/VideoTools_${VERSION}_amd64.AppImage.tar.gz"
+          }
           data = {
             "version": "${VERSION}",
             "notes": "See https://github.com/FarLostBrand/VideoTools/releases/tag/${TAG}",
             "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "platforms": {
-              "linux-x86_64": {
-                "signature": """${LINUX_SIG}""",
-                "url": "${BASE}/VideoTools_${VERSION}_amd64.AppImage.tar.gz"
-              },
-              "darwin-universal": {
-                "signature": """${MACOS_SIG}""",
-                "url": "${BASE}/VideoTools_universal.app.tar.gz"
-              },
-              "windows-x86_64": {
-                "signature": """${WIN_SIG}""",
-                "url": "${BASE}/VideoTools_${VERSION}_x64-setup.exe"
-              }
+              "linux-x86_64":     linux,
+              "darwin-universal": macos,
+              "darwin-aarch64":   macos,
+              "darwin-x86_64":    macos,
+              "windows-x86_64":   windows,
+              "windows-i686":     windows
             }
           }
           with open("latest.json", "w") as f:
