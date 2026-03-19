@@ -80,6 +80,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -99,35 +101,28 @@ jobs:
           VERSION=${TAG#v}
           BASE="https://github.com/FarLostBrand/VideoTools/releases/download/${TAG}"
 
-          # Download the update artifacts
           echo "Downloading artifacts..."
           curl -sL "${BASE}/VideoTools_${VERSION}_amd64.AppImage.tar.gz" -o linux.tar.gz
           curl -sL "${BASE}/VideoTools_universal.app.tar.gz" -o macos.tar.gz
           curl -sL "${BASE}/VideoTools_${VERSION}_x64-setup.exe" -o windows.exe
 
-          # Sign each one using tauri CLI
           echo "Signing artifacts..."
-          TAURI_SIGNING_PRIVATE_KEY=$TAURI_SIGNING_PRIVATE_KEY \
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+          TAURI_SIGNING_PRIVATE_KEY="$TAURI_SIGNING_PRIVATE_KEY" \
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
           npx tauri signer sign linux.tar.gz
 
-          TAURI_SIGNING_PRIVATE_KEY=$TAURI_SIGNING_PRIVATE_KEY \
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+          TAURI_SIGNING_PRIVATE_KEY="$TAURI_SIGNING_PRIVATE_KEY" \
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
           npx tauri signer sign macos.tar.gz
 
-          TAURI_SIGNING_PRIVATE_KEY=$TAURI_SIGNING_PRIVATE_KEY \
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+          TAURI_SIGNING_PRIVATE_KEY="$TAURI_SIGNING_PRIVATE_KEY" \
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
           npx tauri signer sign windows.exe
 
           LINUX_SIG=$(cat linux.tar.gz.sig)
           MACOS_SIG=$(cat macos.tar.gz.sig)
           WIN_SIG=$(cat windows.exe.sig)
 
-          echo "Linux sig: $LINUX_SIG"
-          echo "macOS sig: $MACOS_SIG"
-          echo "Windows sig: $WIN_SIG"
-
-          # Build latest.json
           python3 << PYEOF
           import json
           data = {
@@ -155,7 +150,15 @@ jobs:
           print(json.dumps(data, indent=2))
           PYEOF
 
-      - name: Upload latest.json
+      - name: Commit latest.json to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add latest.json
+          git commit -m "chore: update latest.json for ${{ github.ref_name }}"
+          git push origin HEAD:main
+
+      - name: Upload latest.json to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ github.ref_name }}" latest.json --clobber
