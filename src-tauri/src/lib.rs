@@ -1,4 +1,4 @@
-use tauri::{Emitter, Manager};
+use tauri::{Manager};
 use std::process::Stdio;
 use std::io::{BufRead, BufReader};
 use std::sync::{Arc, Mutex};
