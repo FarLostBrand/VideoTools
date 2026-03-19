@@ -1,4 +1,4 @@
-use tauri::{Manager};
+use tauri::{ Manager};
 use std::process::Stdio;
 use std::io::{BufRead, BufReader};
 use std::sync::{Arc, Mutex};
@@ -10,6 +10,54 @@ type DoneStore = Arc<Mutex<HashMap<String, Option<i32>>>>;
 struct AppState {
     lines: LineStore,
     done:  DoneStore,
+}
+
+/// On macOS/Linux, app bundles don't inherit the user's shell PATH.
+/// This resolves the full PATH by running the user's login shell and
+/// asking it what $PATH is — picks up Homebrew, nvm, pyenv, etc.
+fn resolve_path() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        std::env::var("PATH").unwrap_or_default()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        // Try to get the login shell's PATH
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let output = std::process::Command::new(&shell)
+            .args(["-l", "-c", "echo $PATH"])
+            .output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return path;
+                }
+            }
+            _ => {}
+        }
+
+        // Fallback: common locations Homebrew and system tools live
+        let mut paths: Vec<String> = vec![
+            "/opt/homebrew/bin".into(),
+            "/usr/local/bin".into(),
+            "/usr/bin".into(),
+            "/bin".into(),
+            "/usr/sbin".into(),
+            "/sbin".into(),
+        ];
+        // Prepend existing PATH entries too
+        if let Ok(existing) = std::env::var("PATH") {
+            for p in existing.split(':').rev() {
+                let owned = p.to_string();
+                if !paths.contains(&owned) {
+                    paths.insert(0, owned);
+                }
+            }
+        }
+        paths.join(":")
+    }
 }
 
 #[tauri::command]
@@ -45,13 +93,11 @@ fn get_cwd() -> String {
 async fn check_for_update(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_updater::UpdaterExt;
     match app.updater() {
-        Ok(updater) => {
-            match updater.check().await {
-                Ok(Some(update)) => Ok(Some(update.version.clone())),
-                Ok(None) => Ok(None),
-                Err(e) => Err(e.to_string()),
-            }
-        }
+        Ok(updater) => match updater.check().await {
+            Ok(Some(update)) => Ok(Some(update.version.clone())),
+            Ok(None) => Ok(None),
+            Err(e) => Err(e.to_string()),
+        },
         Err(e) => Err(e.to_string()),
     }
 }
@@ -79,10 +125,12 @@ fn start_process(
     }
     let lines_c = state.lines.clone();
     let done_c  = state.done.clone();
+    let full_path = resolve_path();
 
     std::thread::spawn(move || {
         let result = std::process::Command::new(&program)
             .args(&args)
+            .env("PATH", &full_path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
@@ -113,7 +161,8 @@ fn start_process(
             }
         });
 
-        let _ = t1.join(); let _ = t2.join();
+        let _ = t1.join();
+        let _ = t2.join();
         let code = child.wait().map(|s| s.code().unwrap_or(-1)).unwrap_or(-1);
         done_c.lock().unwrap().insert(event_id, Some(code));
     });
