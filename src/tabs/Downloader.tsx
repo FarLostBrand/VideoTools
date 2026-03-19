@@ -7,32 +7,63 @@ import LogOutput from "../components/LogOutput";
 import type React from "react";
 
 const PRESETS = [
-  { label: "Best",  args: "-f bestvideo+bestaudio/best",                  title: "Best available quality" },
-  { label: "MP4",   args: "-f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4", title: "Force MP4 container" },
-  { label: "1080p", args: "-f bestvideo[height<=1080]+bestaudio/best",    title: "Cap at 1080p" },
-  { label: "720p",  args: "-f bestvideo[height<=720]+bestaudio/best",     title: "Cap at 720p" },
-  { label: "MP3",   args: "-x --audio-format mp3 --audio-quality 0",     title: "Extract audio as MP3" },
-  { label: "WAV",   args: "-x --audio-format wav",                        title: "Extract audio as WAV" },
+  {
+    label: "Best",
+    args: "-f bestvideo+bestaudio/best",
+    title: "Best available quality",
+  },
+  {
+    label: "MP4",
+    args: "-f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+    title: "Force MP4 container",
+  },
+  {
+    label: "1080p",
+    args: "-f bestvideo[height<=1080]+bestaudio/best",
+    title: "Cap at 1080p",
+  },
+  {
+    label: "720p",
+    args: "-f bestvideo[height<=720]+bestaudio/best",
+    title: "Cap at 720p",
+  },
+  {
+    label: "MP3",
+    args: "-x --audio-format mp3 --audio-quality 0",
+    title: "Extract audio as MP3",
+  },
+  {
+    label: "WAV",
+    args: "-x --audio-format wav",
+    title: "Extract audio as WAV",
+  },
 ];
 
-export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLDivElement | null> }) {
-  const { state, isRunning, start, cancel, clearLines } = useProcess("downloader");
+export default function Downloader({
+  bodyRef,
+}: {
+  bodyRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { state, isRunning, start, cancel, clearLines } =
+    useProcess("downloader");
 
-  const [url, setUrl]             = useState("");
+  const [url, setUrl] = useState("");
   // null = using default downloads dir, string = user has set a custom path
   const [customDir, setCustomDir] = useState<string | null>(null);
   const [defaultDir, setDefaultDir] = useState("");
   const [customArgs, setCustomArgs] = useState("");
-  const [preset, setPreset]       = useState<string | null>(null);
+  const [preset, setPreset] = useState<string | null>(null);
 
   useEffect(() => {
-    invoke<string>("get_cwd").then((dir) => {
-      setDefaultDir(dir);
-      // Only load saved setting if it differs from the default
-      getSetting<string>("dlDir", "").then((saved) => {
-        if (saved && saved !== dir) setCustomDir(saved);
-      });
-    }).catch(() => {});
+    invoke<string>("get_cwd")
+      .then((dir) => {
+        setDefaultDir(dir);
+        // Only load saved setting if it differs from the default
+        getSetting<string>("dlDir", "").then((saved) => {
+          if (saved && saved !== dir) setCustomDir(saved);
+        });
+      })
+      .catch(() => {});
     getSetting<string>("dlCustomArgs", "").then(setCustomArgs);
   }, []);
 
@@ -71,7 +102,10 @@ export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLD
   };
 
   const statusLabel: Record<string, string> = {
-    idle: "Ready", running: "Downloading…", done: "Done", error: "Error",
+    idle: "Ready",
+    running: "Downloading…",
+    done: "Done",
+    error: "Error",
   };
 
   return (
@@ -81,12 +115,15 @@ export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLD
         <p>Download video or audio using yt-dlp</p>
       </div>
       <div className="tab-body" ref={bodyRef}>
-
         <div className="field-group">
           <label>URL</label>
-          <input type="url" placeholder="https://youtube.com/watch?v=…" value={url}
+          <input
+            type="url"
+            placeholder="https://youtube.com/watch?v=…"
+            value={url}
             onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !isRunning && handleRun()} />
+            onKeyDown={(e) => e.key === "Enter" && !isRunning && handleRun()}
+          />
         </div>
 
         <div className="field-group">
@@ -98,24 +135,55 @@ export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLD
               value={hasCustomDir ? customDir! : ""}
               onChange={(e) => {
                 const v = e.target.value;
-                if (v === "") { handleClearDir(); }
-                else { setCustomDir(v); setSetting("dlDir", v); }
+                if (v === "") {
+                  handleClearDir();
+                } else {
+                  setCustomDir(v);
+                  setSetting("dlDir", v);
+                }
               }}
             />
-            <button className="btn btn-secondary btn-sm" onClick={handlePickFolder}>Browse</button>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handlePickFolder}
+            >
+              Browse
+            </button>
             {hasCustomDir && (
-              <button className="btn btn-secondary btn-sm" onClick={handleClearDir}>✕</button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={handleClearDir}
+              >
+                ✕
+              </button>
             )}
           </div>
         </div>
 
         <div className="field-group">
-          <label>Format preset <span style={{ color: "var(--text2)", fontWeight: 400, textTransform: "none" }}>(none = yt-dlp default)</span></label>
+          <label>
+            Format preset{" "}
+            <span
+              style={{
+                color: "var(--text2)",
+                fontWeight: 400,
+                textTransform: "none",
+              }}
+            >
+              (none = yt-dlp default)
+            </span>
+          </label>
           <div className="btn-group">
             {PRESETS.map((p) => (
-              <button key={p.label} title={p.title}
-                className={"btn btn-sm " + (preset === p.args ? "btn-primary" : "btn-secondary")}
-                onClick={() => setPreset(preset === p.args ? null : p.args)}>
+              <button
+                key={p.label}
+                title={p.title}
+                className={
+                  "btn btn-sm " +
+                  (preset === p.args ? "btn-primary" : "btn-secondary")
+                }
+                onClick={() => setPreset(preset === p.args ? null : p.args)}
+              >
                 {p.label}
               </button>
             ))}
@@ -124,19 +192,33 @@ export default function Downloader({ bodyRef }: { bodyRef: React.RefObject<HTMLD
 
         <div className="field-group">
           <label>Custom arguments</label>
-          <textarea rows={3} placeholder={"--write-thumbnail\n--convert-subs srt\n--embed-chapters"}
+          <textarea
+            rows={3}
+            placeholder={
+              "--write-thumbnail\n--convert-subs srt\n--embed-chapters"
+            }
             value={customArgs}
-            onChange={(e) => { setCustomArgs(e.target.value); setSetting("dlCustomArgs", e.target.value); }} />
+            onChange={(e) => {
+              setCustomArgs(e.target.value);
+              setSetting("dlCustomArgs", e.target.value);
+            }}
+          />
         </div>
 
         <div className="status-row">
           <div className="btn-group">
             {!isRunning ? (
-              <button className="btn btn-primary" onClick={handleRun} disabled={!url.trim()}>
+              <button
+                className="btn btn-primary"
+                onClick={handleRun}
+                disabled={!url.trim()}
+              >
                 ▶ Download
               </button>
             ) : (
-              <button className="btn btn-danger" onClick={cancel}>■ Cancel</button>
+              <button className="btn btn-danger" onClick={cancel}>
+                ■ Cancel
+              </button>
             )}
           </div>
           <div className={"status-pill " + state.status}>

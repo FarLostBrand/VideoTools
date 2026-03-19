@@ -1,4 +1,4 @@
-use tauri::{ Manager};
+use tauri::{Emitter, Manager};
 use std::process::Stdio;
 use std::io::{BufRead, BufReader};
 use std::sync::{Arc, Mutex};
@@ -184,6 +184,17 @@ fn cleanup_process(state: tauri::State<AppState>, event_id: String) {
     state.done.lock().unwrap().remove(&event_id);
 }
 
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    std::process::Command::new("xdg-open").arg(&url).spawn().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
+    std::process::Command::new("open").arg(&url).spawn().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    std::process::Command::new("cmd").args(["/c", "start", &url]).spawn().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -198,7 +209,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pick_folder, pick_files, get_script_path, get_cwd,
             start_process, poll_process, cleanup_process,
-            check_for_update, install_update,
+            check_for_update, install_update, open_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
