@@ -96,9 +96,10 @@ export default function Downloader({
     return args;
   };
 
-  const handleRun = () => {
+  const handleRun = async () => {
     if (!url.trim() || isRunning) return;
-    start("yt-dlp", buildArgs(), false);
+    const ytdlpCmd = (await getSetting<string>("ytdlpPath", "")) || "yt-dlp";
+    start(ytdlpCmd, buildArgs(), false);
   };
 
   const statusLabel: Record<string, string> = {
