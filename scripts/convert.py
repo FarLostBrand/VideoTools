@@ -153,10 +153,16 @@ def run_ffmpeg(src: Path, out: Path, extra_args: list[str]) -> bool:
     for line in process.stdout:
         line = line.rstrip()
         if not line: continue
+        
+        if "configuration:" in line:
+            continue
+            
         if any(k in line for k in ["frame=", "fps=", "time=", "speed="]):
             log(f"[PROGRESS] {line}")
-        elif any(k in line for k in ["Error", "error", "Invalid", "No such"]):
+
+        elif any(k in line for k in ["Error:", "error:", "Invalid", "No such"]):
             log(f"[ERROR] {line}")
+            
     process.wait()
     if process.returncode == 0:
         log(f"[DONE]  {out.name}")
