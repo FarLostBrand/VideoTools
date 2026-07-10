@@ -13,6 +13,10 @@ import os
 import json
 from pathlib import Path
 
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
+
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".flv", ".ts", ".mts"}
 
 # ── Codec modes (editing/archival) ────────────────────────
@@ -110,21 +114,29 @@ def log(msg: str):
 
 def check_dependencies():
     missing = []
+    # Windows flags to suppress blank popup consoles
+    c_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
     for cmd in ["ffmpeg", "ffprobe"]:
         result = subprocess.run(
             ["which" if sys.platform != "win32" else "where", cmd],
             capture_output=True,
+            creationflags=c_flags
         )
         if result.returncode != 0:
             missing.append(cmd)
     return missing
 
 def probe_video(filepath: str):
+    c_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    # Normalize path to absolute path with Windows separators
+    clean_path = str(Path(filepath).resolve())
+    
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0",
          "-show_entries", "stream=width,height,r_frame_rate",
-         "-of", "json", filepath],
+         "-of", "json", clean_path],
         capture_output=True, text=True,
+        creationflags=c_flags
     )
     if result.returncode != 0:
         return None, None, None
@@ -148,8 +160,23 @@ def get_dnxhr_bitrate(filepath: str) -> str:
 
 def run_ffmpeg(src: Path, out: Path, extra_args: list[str]) -> bool:
     log(f"[START] {src.name} → {out.name}")
-    args = ["ffmpeg", "-y", "-i", str(src)] + extra_args + [str(out)]
-    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    
+    # Fully absolute strings to guarantee compatibility with Windows binaries
+    src_str = str(src.resolve())
+    out_str = str(out.resolve())
+    
+    args = ["ffmpeg", "-y", "-i", src_str] + extra_args + [out_str]
+    c_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    
+    process = subprocess.Popen(
+        args, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT, 
+        text=True, 
+        bufsize=1,
+        creationflags=c_flags
+    )
+    
     for line in process.stdout:
         line = line.rstrip()
         if not line: continue
@@ -176,11 +203,11 @@ def collect_files(files: list[str], folder: str | None) -> list[str]:
     if folder:
         for f in sorted(Path(folder).iterdir()):
             if f.is_file() and f.suffix.lower() in VIDEO_EXTENSIONS:
-                result.append(str(f))
+                result.append(str(f.resolve()))
     for f in (files or []):
         p = Path(f)
         if p.is_file() and p.suffix.lower() in VIDEO_EXTENSIONS:
-            result.append(str(p))
+            result.append(str(p.resolve()))
     return result
 
 def output_path(src: Path, ext: str, outdir: str | None, suffix: str) -> Path:
