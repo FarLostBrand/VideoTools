@@ -8,6 +8,8 @@ src-tauri/target/
 # Tauri generated files
 src-tauri/gen/
 
+src-tauri/binaries/*
+
 # Logs
 *.log
 npm-debug.log*

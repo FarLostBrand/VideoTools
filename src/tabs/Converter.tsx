@@ -4,6 +4,7 @@ import { pickFolder, pickFiles, getScriptPath } from "../lib/dialog";
 import { getSetting, setSetting } from "../lib/store";
 import { useProcess } from "../lib/process";
 import LogOutput from "../components/LogOutput";
+import { invoke } from "@tauri-apps/api/core";
 
 const CODEC_MODES = [
   {
@@ -54,7 +55,8 @@ const VIDEO_FORMATS = [
   { id: "mp4", label: "MP4" },
   { id: "mkv", label: "MKV" },
   { id: "mov", label: "MOV" },
-  { id: "webm", label: "WebM" },
+  { id: "webm_vp8", label: "WebM (VP8)" },
+  { id: "webm_vp9", label: "WebM (VP9)" },
   { id: "avi", label: "AVI" },
 ] as const;
 
@@ -159,22 +161,110 @@ export default function Converter({
     const hasInput = sourceMode === "folder" ? !!folder : files.length > 0;
     if (!hasInput || isRunning) return;
 
-    const scriptPath = await getScriptPath("scripts/convert.py");
-    const pythonCmd = (await getSetting<string>("pythonPath", "")) || "python3";
-
-    const args: string[] = [scriptPath];
-    if (tab === "format") {
-      args.push("--format", targetFormat, "--quality", quality);
-    } else {
-      args.push("--mode", codecMode);
-      if (codecMode === "h264" || codecMode === "h265")
-        args.push("--crf", String(crf));
+    let ffmpegPath: string;
+    try {
+      ffmpegPath = await invoke<string>("get_sidecar_path", { name: "ffmpeg" });
+    } catch (e) {
+      console.error("Failed to find bundled ffmpeg sidecar:", e);
+      return;
     }
-    if (sourceMode === "folder") args.push("--folder", folder);
-    else args.push("--files", ...files);
-    if (outDir) args.push("--outdir", outDir);
 
-    start(pythonCmd, args, false);
+    let inputFiles = [...files];
+    if (sourceMode === "folder") {
+      try {
+        const allowedExtensions = tab === "format" ? ALL_EXTS : VIDEO_EXTS;
+        inputFiles = await invoke<string[]>("list_files_in_folder", { 
+          dir: folder, 
+          extensions: allowedExtensions 
+        });
+      } catch (e) {
+        console.error("Failed to read folder contents:", e);
+        return;
+      }
+    }
+    
+    for (let i = 0; i < inputFiles.length; i++) {
+      const inputFile = inputFiles[i];
+      
+      // Determine Output Directory
+      let outputDir = outDir;
+      if (!outputDir) {
+        // Fallback to same directory as input file
+        const lastSlash = Math.max(inputFile.lastIndexOf("/"), inputFile.lastIndexOf("\\"));
+        outputDir = lastSlash !== -1 ? inputFile.substring(0, lastSlash) : ".";
+      }
+
+      // Get input file name without extension
+      const baseName = inputFile.split(/[\\/]/).pop()?.split('.').slice(0, -1).join('.') ?? "output";
+      
+      // Determine destination extension
+      let destExt = targetFormat;
+      if (tab === "codec") {
+        if (codecMode.startsWith("prores") || codecMode === "clip" || codecMode === "edit" || codecMode === "color" || codecMode === "quality") {
+          destExt = "mov";
+        } else if (codecMode === "main") {
+          destExt = "mxf";
+        } else {
+          destExt = "mp4";
+        }
+      } else {
+        if (destExt.startsWith("webm")) {
+          destExt = "webm";
+        }
+      }
+
+      const outputFile = `${outputDir}/${baseName}_converted.${destExt}`;
+
+      const args: string[] = ["-y", "-i", inputFile];
+
+      if (tab === "format") {
+        // --- FORMAT TAB CONVERSION ---
+        if (targetFormat === "webm_vp8") {
+          args.push("-c:v", "libvpx", "-metadata:s:v:0", "alpha_mode=1");
+        } else if (targetFormat === "webm_vp9") {
+          args.push("-c:v", "libvpx-vp9", "-metadata:s:v:0", "alpha_mode=1");
+        }
+
+        if (quality === "low") {
+          args.push("-crf", "28", "-preset", "fast");
+        } else if (quality === "medium") {
+          args.push("-crf", "23", "-preset", "medium");
+        } else if (quality === "high") {
+          args.push("-crf", "18", "-preset", "slow");
+        } else if (quality === "lossless") {
+          if (["wav", "flac"].includes(targetFormat)) {
+            args.push("-c:a", targetFormat === "flac" ? "flac" : "pcm_s16le");
+          } else {
+            args.push("-crf", "0", "-preset", "placebo");
+          }
+        }
+      } else {
+        // --- CODEC TAB CONVERSION ---
+        if (codecMode === "h264") {
+          args.push("-c:v", "libx264", "-crf", String(crf), "-pix_fmt", "yuv420p");
+        } else if (codecMode === "h265") {
+          args.push("-c:v", "libx265", "-crf", String(crf), "-pix_fmt", "yuv420p10le");
+        } else if (codecMode === "clip") {
+          // ProRes Proxy
+          args.push("-c:v", "prores_ks", "-profile:v", "0", "-vendor", "apl0", "-bits_per_mb", "8000", "-pix_fmt", "yuv422p10le");
+        } else if (codecMode === "edit") {
+          // ProRes LT / Standard (ProRes 422)
+          args.push("-c:v", "prores_ks", "-profile:v", "2", "-vendor", "apl0", "-pix_fmt", "yuv422p10le");
+        } else if (codecMode === "color") {
+          // ProRes HQ
+          args.push("-c:v", "prores_ks", "-profile:v", "3", "-vendor", "apl0", "-pix_fmt", "yuv422p10le");
+        } else if (codecMode === "quality") {
+          // ProRes 4444 (with Alpha support)
+          args.push("-c:v", "prores_ks", "-profile:v", "4", "-vendor", "apl0", "-pix_fmt", "yuva444p10le");
+        } else if (codecMode === "main") {
+          // DNxHR HQ
+          args.push("-c:v", "dnxhd", "-profile:v", "dnxhr_hq", "-pix_fmt", "yuv422p");
+        }
+      }
+      args.push(outputFile);
+
+      start(ffmpegPath, args, false);
+    }
   };
 
   const hasInput = sourceMode === "folder" ? !!folder : files.length > 0;

@@ -57,6 +57,60 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      # ── Download and Inject Sidecar Binaries ──────────────────────────
+      - name: Create sidecars directory
+        run: mkdir -p src-tauri/binaries
+
+      - name: Setup Windows Sidecars
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          # Download static ffmpeg build for Windows
+          curl -L -o ffmpeg.zip "https://github.com/GyanD/codexffmpeg/releases/download/2026.01.29/ffmpeg-2026.01.29-full_build-shared.zip" || curl -L -o ffmpeg.zip "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+          unzip ffmpeg.zip
+          
+          # Find the extracted directories and move binaries with target triple
+          FFMPEG_DIR=$(find . -maxdepth 1 -type d -name "ffmpeg-*" | head -n 1)
+          mv "$FFMPEG_DIR/bin/ffmpeg.exe" src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe
+          mv "$FFMPEG_DIR/bin/ffprobe.exe" src-tauri/binaries/ffprobe-x86_64-pc-windows-msvc.exe
+
+      - name: Setup macOS Sidecars
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # Download architecture-specific binaries for Apple Silicon (aarch64) and Intel (x86_64)
+          # Evermeet.cx provides standalone static binaries for macOS
+          
+          # 1. Intel (x86_64) Sidecars
+          curl -L -o ffmpeg_intel.zip https://evermeet.cx/ffmpeg/getrelease/zip
+          curl -L -o ffprobe_intel.zip https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip
+          unzip -o ffmpeg_intel.zip -d intel_bin
+          unzip -o ffprobe_intel.zip -d intel_bin
+          mv intel_bin/ffmpeg src-tauri/binaries/ffmpeg-x86_64-apple-darwin
+          mv intel_bin/ffprobe src-tauri/binaries/ffprobe-x86_64-apple-darwin
+          
+          # 2. Apple Silicon (aarch64) Sidecars
+          curl -L -o ffmpeg_arm.zip https://evermeet.cx/ffmpeg/getrelease/arm64/zip
+          curl -L -o ffprobe_arm.zip https://evermeet.cx/ffmpeg/getrelease/ffprobe/arm64/zip
+          unzip -o ffmpeg_arm.zip -d arm_bin
+          unzip -o ffprobe_arm.zip -d arm_bin
+          mv arm_bin/ffmpeg src-tauri/binaries/ffmpeg-aarch64-apple-darwin
+          mv arm_bin/ffprobe src-tauri/binaries/ffprobe-aarch64-apple-darwin
+          
+          chmod +x src-tauri/binaries/*
+
+      - name: Setup Linux Sidecars
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          # Download static release for x86_64 Linux (John Van Sickle builds)
+          curl -L -o ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+          tar -xf ffmpeg.tar.xz
+          
+          FFMPEG_DIR=$(find . -maxdepth 1 -type d -name "ffmpeg-*-amd64-static" | head -n 1)
+          mv "$FFMPEG_DIR/ffmpeg" src-tauri/binaries/ffmpeg-x86_64-unknown-linux-gnu
+          mv "$FFMPEG_DIR/ffprobe" src-tauri/binaries/ffprobe-x86_64-unknown-linux-gnu
+          chmod +x src-tauri/binaries/*
+
+      # ── Build and release ─────────────────────────────────────────────
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
         env:
