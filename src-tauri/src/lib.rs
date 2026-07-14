@@ -1,8 +1,89 @@
-use tauri::{Manager};
+use tauri::Manager;
 use std::process::Stdio;
 use std::io::{BufRead, BufReader};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+use tauri::path::BaseDirectory;
+use std::fs;
+
+// --- DEDUPLICATED & FIXED SIDECAR RESOLUTION ---
+#[tauri::command]
+fn get_sidecar_path(app: tauri::AppHandle, name: String) -> Result<String, String> {
+    // Determine target triple suffix
+    let target_triple = env!("TAURI_ENV_TARGET_TRIPLE");
+    let file_name = if cfg!(target_os = "windows") {
+        format!("{}-{}.exe", name, target_triple)
+    } else {
+        format!("{}-{}", name, target_triple)
+    };
+
+    // Manually resolve the path inside the resources base directory
+    let path = app.path()
+        .resolve(format!("binaries/{}", file_name), BaseDirectory::Resource)
+        .map_err(|e| e.to_string())?;
+        
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn list_files_in_folder(dir: String, extensions: Vec<String>) -> Result<Vec<String>, String> {
+    let mut files = Vec::new();
+    let paths = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+
+    for path in paths.flatten() {
+        if let Ok(file_type) = path.file_type() {
+            if file_type.is_file() {
+                let path_buf = path.path();
+                if let Some(ext) = path_buf.extension().and_then(|s| s.to_str()) {
+                    if extensions.contains(&ext.to_lowercase()) {
+                        files.push(path_buf.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+    }
+    Ok(files)
+}
+
+#[tauri::command]
+async fn ensure_ytdlp_path(app: tauri::AppHandle) -> Result<String, String> {
+    // Resolve the App Data Directory safely
+    let app_dir = app.path()
+        .resolve("", BaseDirectory::AppData)
+        .map_err(|e| e.to_string())?;
+
+    // Determine the expected name based on operating system
+    let exe_name = if cfg!(target_os = "windows") { "yt-dlp.exe" } else { "yt-dlp" };
+    let target_path = app_dir.join(exe_name);
+
+    if !app_dir.exists() {
+        std::fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
+    }
+
+    if !target_path.exists() {
+        let url = if cfg!(target_os = "windows") {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+        } else if cfg!(target_os = "macos") {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+        } else {
+            "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
+        };
+
+        let response = reqwest::blocking::get(url).map_err(|e| e.to_string())?;
+        let bytes = response.bytes().map_err(|e| e.to_string())?;
+        std::fs::write(&target_path, bytes).map_err(|e| e.to_string())?;
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut perms = std::fs::metadata(&target_path).map_err(|e| e.to_string())?.permissions();
+            perms.set_mode(0o755);
+            std::fs::set_permissions(&target_path, perms).map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok(target_path.to_string_lossy().to_string())
+}
 
 type LineStore = Arc<Mutex<HashMap<String, Vec<String>>>>;
 type DoneStore = Arc<Mutex<HashMap<String, Option<i32>>>>;
@@ -11,10 +92,6 @@ struct AppState {
     lines: LineStore,
     done:  DoneStore,
 }
-
-/// On macOS/Linux, app bundles don't inherit the user's shell PATH.
-/// This resolves the full PATH by running the user's login shell and
-/// asking it what $PATH is — picks up Homebrew, nvm, pyenv, etc.
 fn resolve_path() -> String {
     #[cfg(target_os = "windows")]
     {
@@ -22,7 +99,6 @@ fn resolve_path() -> String {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        // Try to get the login shell's PATH
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
         let output = std::process::Command::new(&shell)
             .args(["-l", "-c", "echo $PATH"])
@@ -38,7 +114,6 @@ fn resolve_path() -> String {
             _ => {}
         }
 
-        // Fallback: common locations Homebrew and system tools live
         let mut paths: Vec<String> = vec![
             "/opt/homebrew/bin".into(),
             "/usr/local/bin".into(),
@@ -47,7 +122,6 @@ fn resolve_path() -> String {
             "/usr/sbin".into(),
             "/sbin".into(),
         ];
-        // Prepend existing PATH entries too
         if let Ok(existing) = std::env::var("PATH") {
             for p in existing.split(':').rev() {
                 let owned = p.to_string();
@@ -206,10 +280,21 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_shell::init()) 
         .invoke_handler(tauri::generate_handler![
-            pick_folder, pick_files, get_script_path, get_cwd,
-            start_process, poll_process, cleanup_process,
-            check_for_update, install_update, open_url,
+            pick_folder, 
+            pick_files, 
+            get_script_path, 
+            get_cwd,
+            start_process, 
+            poll_process, 
+            cleanup_process,
+            check_for_update, 
+            install_update, 
+            open_url,
+            ensure_ytdlp_path,
+            get_sidecar_path,
+            list_files_in_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
