@@ -66,7 +66,7 @@ jobs:
         shell: bash
         run: |
           # Download static ffmpeg build for Windows
-          curl -L -o ffmpeg.zip "https://github.com/GyanD/codexffmpeg/releases/download/2026.01.29/ffmpeg-2026.01.29-full_build-shared.zip" || curl -L -o ffmpeg.zip "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+          curl -L -o ffmpeg.zip "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
           unzip ffmpeg.zip
           
           # Find the extracted directories and move binaries with target triple
@@ -81,16 +81,16 @@ jobs:
           # Evermeet.cx provides standalone static binaries for macOS
           
           # 1. Intel (x86_64) Sidecars
-          curl -L -o ffmpeg_intel.zip https://evermeet.cx/ffmpeg/getrelease/zip
-          curl -L -o ffprobe_intel.zip https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip
+          curl -L -o ffmpeg_intel.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/amd64/snapshot/ffmpeg.zip"
+          curl -L -o ffprobe_intel.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/amd64/snapshot/ffprobe.zip"
           unzip -o ffmpeg_intel.zip -d intel_bin
           unzip -o ffprobe_intel.zip -d intel_bin
           mv intel_bin/ffmpeg src-tauri/binaries/ffmpeg-x86_64-apple-darwin
           mv intel_bin/ffprobe src-tauri/binaries/ffprobe-x86_64-apple-darwin
           
           # 2. Apple Silicon (aarch64) Sidecars
-          curl -L -o ffmpeg_arm.zip https://evermeet.cx/ffmpeg/getrelease/arm64/zip
-          curl -L -o ffprobe_arm.zip https://evermeet.cx/ffmpeg/getrelease/ffprobe/arm64/zip
+          curl -L -o ffmpeg_arm.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/snapshot/ffmpeg.zip"
+          curl -L -o ffprobe_arm.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/snapshot/ffprobe.zip"
           unzip -o ffmpeg_arm.zip -d arm_bin
           unzip -o ffprobe_arm.zip -d arm_bin
           mv arm_bin/ffmpeg src-tauri/binaries/ffmpeg-aarch64-apple-darwin

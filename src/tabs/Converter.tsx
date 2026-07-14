@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type React from "react";
-import { pickFolder, pickFiles, getScriptPath } from "../lib/dialog";
+import { pickFolder, pickFiles } from "../lib/dialog";
 import { getSetting, setSetting } from "../lib/store";
 import { useProcess } from "../lib/process";
 import LogOutput from "../components/LogOutput";
