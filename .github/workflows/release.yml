@@ -102,7 +102,7 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           # Download static release for x86_64 Linux (John Van Sickle builds)
-          curl -L -o ffmpeg.tar.xz "https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
+          curl -L -o ffmpeg.tar.xz "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
           tar -xf ffmpeg.tar.xz
           
           FFMPEG_DIR=$(find . -maxdepth 1 -type d -name "ffmpeg-*-amd64-static" | head -n 1)
