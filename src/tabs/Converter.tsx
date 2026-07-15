@@ -166,6 +166,7 @@ export default function Converter({
       ffmpegPath = await invoke<string>("get_sidecar_path", { name: "videotools-ffmpeg" });
     } catch (e) {
       console.error("Failed to find bundled ffmpeg sidecar:", e);
+      alert(`Initialization Error:\n${e}`); // ◄ Now you will see exactly why it failed!
       return;
     }
 
@@ -179,8 +180,14 @@ export default function Converter({
         });
       } catch (e) {
         console.error("Failed to read folder contents:", e);
+        alert(`Folder Read Error:\n${e}`);
         return;
       }
+    }
+
+    if (inputFiles.length === 0) {
+      alert("No valid media files found to convert.");
+      return;
     }
     
     for (let i = 0; i < inputFiles.length; i++) {

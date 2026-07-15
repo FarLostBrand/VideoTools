@@ -8,8 +8,18 @@ use std::fs;
 
 #[tauri::command]
 fn get_sidecar_path(app: tauri::AppHandle, name: String) -> Result<String, String> {
-    let target_triple = env!("TAURI_ENV_TARGET_TRIPLE");
-    
+    let target_triple = if cfg!(target_arch = "x86_64") {
+        "x86_64-unknown-linux-gnu"
+    } else if cfg!(target_arch = "aarch64") {
+        "aarch64-unknown-linux-gnu"
+    } else if cfg!(target_os = "windows") {
+        "x86_64-pc-windows-msvc"
+    } else if cfg!(target_os = "macos") {
+        "x86_64-apple-darwin"
+    } else {
+        return Err("Unsupported architecture".to_string());
+    };
+
     let file_name = if cfg!(target_os = "windows") {
         format!("{}-{}.exe", name, target_triple)
     } else {
@@ -20,23 +30,36 @@ fn get_sidecar_path(app: tauri::AppHandle, name: String) -> Result<String, Strin
         .resolve(format!("binaries/{}", file_name), BaseDirectory::Resource)
         .map_err(|e| e.to_string())?;
 
-    if !path.exists() {
-        return Err(format!("Resolved path does not exist: {:?}", path));
-    }
+    // 3. Fallback: If it's not in resources, check the direct binary sidecar directory
+    let final_path = if !path.exists() {
+        let fallback_path = app.path()
+            .resolve(format!("binaries/{}", name), BaseDirectory::Resource)
+            .map_err(|e| e.to_string())?;
+        if !fallback_path.exists() {
+            return Err(format!(
+                "Sidecar binary not found. Tried:\n1. {}\n2. {}", 
+                path.display(), 
+                fallback_path.display()
+            ));
+        }
+        fallback_path
+    } else {
+        path
+    };
 
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        if let Ok(metadata) = std::fs::metadata(&path) {
+        if let Ok(metadata) = std::fs::metadata(&final_path) {
             let mut perms = metadata.permissions();
-            if perms.mode() & 0o111 == 0 { // Check if missing execute permissions
+            if perms.mode() & 0o111 == 0 {
                 perms.set_mode(0o755);
-                let _ = std::fs::set_permissions(&path, perms);
+                let _ = std::fs::set_permissions(&final_path, perms);
             }
         }
     }
         
-    Ok(path.to_string_lossy().to_string())
+    Ok(final_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]

@@ -79,7 +79,7 @@ function AppInner() {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <span className="version">v1.3.8</span>
+          <span className="version">v1.3.9</span>
         </div>
       </aside>
 
