@@ -6,21 +6,35 @@ use std::collections::HashMap;
 use tauri::path::BaseDirectory;
 use std::fs;
 
-// --- DEDUPLICATED & FIXED SIDECAR RESOLUTION ---
 #[tauri::command]
 fn get_sidecar_path(app: tauri::AppHandle, name: String) -> Result<String, String> {
-    // Determine target triple suffix
     let target_triple = env!("TAURI_ENV_TARGET_TRIPLE");
+    
     let file_name = if cfg!(target_os = "windows") {
         format!("{}-{}.exe", name, target_triple)
     } else {
         format!("{}-{}", name, target_triple)
     };
 
-    // Manually resolve the path inside the resources base directory
     let path = app.path()
         .resolve(format!("binaries/{}", file_name), BaseDirectory::Resource)
         .map_err(|e| e.to_string())?;
+
+    if !path.exists() {
+        return Err(format!("Resolved path does not exist: {:?}", path));
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&path) {
+            let mut perms = metadata.permissions();
+            if perms.mode() & 0o111 == 0 { // Check if missing execute permissions
+                perms.set_mode(0o755);
+                let _ = std::fs::set_permissions(&path, perms);
+            }
+        }
+    }
         
     Ok(path.to_string_lossy().to_string())
 }
