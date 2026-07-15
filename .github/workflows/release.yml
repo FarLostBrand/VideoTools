@@ -84,7 +84,6 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           # Download architecture-specific binaries for Apple Silicon (aarch64) and Intel (x86_64)
-          # Evermeet.cx provides standalone static binaries for macOS
           
           # 1. Intel (x86_64) Sidecars
           curl -L -o ffmpeg_intel.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/amd64/snapshot/ffmpeg.zip"
@@ -101,6 +100,15 @@ jobs:
           unzip -o ffprobe_arm.zip -d arm_bin
           mv arm_bin/ffmpeg src-tauri/binaries/ffmpeg-aarch64-apple-darwin
           mv arm_bin/ffprobe src-tauri/binaries/ffprobe-aarch64-apple-darwin
+          
+          # 3. Create Universal Sidecars (Required for universal-apple-darwin target)
+          lipo -create -output src-tauri/binaries/ffmpeg-universal-apple-darwin \
+            src-tauri/binaries/ffmpeg-x86_64-apple-darwin \
+            src-tauri/binaries/ffmpeg-aarch64-apple-darwin
+
+          lipo -create -output src-tauri/binaries/ffprobe-universal-apple-darwin \
+            src-tauri/binaries/ffprobe-x86_64-apple-darwin \
+            src-tauri/binaries/ffprobe-aarch64-apple-darwin
           
           chmod +x src-tauri/binaries/*
 
