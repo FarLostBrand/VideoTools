@@ -163,7 +163,7 @@ export default function Converter({
 
     let ffmpegPath: string;
     try {
-      ffmpegPath = await invoke<string>("get_sidecar_path", { name: "ffmpeg" });
+      ffmpegPath = await invoke<string>("get_sidecar_path", { name: "videotools-ffmpeg" });
     } catch (e) {
       console.error("Failed to find bundled ffmpeg sidecar:", e);
       return;

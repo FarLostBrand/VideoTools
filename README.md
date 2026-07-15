@@ -51,7 +51,6 @@
 
 **yt-dlp**: for downloading  
 **ffmpeg and ffprobe**: for converting  
-**python3**: runs the converter backend
 
 ## Installation
 

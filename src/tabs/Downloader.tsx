@@ -85,20 +85,36 @@ export default function Downloader({
   };
 
   const buildArgs = (): string[] => {
-    const args: string[] = [];
-    if (effectiveDir) args.push("-o", `${effectiveDir}/%(title)s.%(ext)s`);
-    const allExtra = [preset, customArgs.trim()].filter(Boolean).join(" ");
-    if (allExtra) {
-      const parts = allExtra.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g);
-      if (parts) args.push(...parts);
+  const args: string[] = [];
+  if (effectiveDir) args.push("-o", `${effectiveDir}/%(title)s.%(ext)s`);
+  const allExtra = [preset, customArgs.trim()].filter(Boolean).join(" ");
+  if (allExtra) {
+    const parts = allExtra.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g);
+    if (parts) {
+      const cleanedParts = parts.map(part => 
+        (part.startsWith('"') && part.endsWith('"')) || (part.startsWith("'") && part.endsWith("'"))
+          ? part.slice(1, -1)
+          : part
+      );
+      args.push(...cleanedParts);
     }
-    args.push(url.trim());
-    return args;
-  };
+  }
+  args.push(url.trim());
+  return args;
+};
 
   const handleRun = async () => {
     if (!url.trim() || isRunning) return;
-    const ytdlpCmd = (await getSetting<string>("ytdlpPath", "")) || "yt-dlp";
+
+    let ytdlpCmd: string;
+    try {
+      // Dynamically resolve or download the managed yt-dlp binary
+      ytdlpCmd = await invoke<string>("ensure_ytdlp_path");
+    } catch (e) {
+      console.error("Failed to resolve yt-dlp path:", e);
+      return;
+    }
+
     start(ytdlpCmd, buildArgs(), false);
   };
 
@@ -132,6 +148,7 @@ export default function Downloader({
           <div className="path-row">
             <input
               type="text"
+              readOnly
               placeholder={defaultDir || "~/Downloads"}
               value={hasCustomDir ? customDir! : ""}
               onChange={(e) => {

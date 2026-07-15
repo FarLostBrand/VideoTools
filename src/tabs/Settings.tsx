@@ -259,10 +259,6 @@ export default function Settings({
                 install: "brew install ffmpeg  or  dnf install ffmpeg",
               },
               { tool: "ffprobe", install: "Included with ffmpeg" },
-              {
-                tool: "python3",
-                install: "python.org  or  brew install python",
-              },
             ].map(({ tool, install }) => (
               <div
                 key={tool}
