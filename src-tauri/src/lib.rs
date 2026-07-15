@@ -6,6 +6,60 @@ use std::collections::HashMap;
 use tauri::path::BaseDirectory;
 use std::fs;
 
+use tauri_plugin_shell::ShellExt;
+use tauri_plugin_shell::process::CommandEvent;
+
+#[tauri::command]
+async fn run_ffmpeg_sidecar(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    args: Vec<String>,
+    event_id: String,
+) -> Result<(), String> {
+    {
+        state.lines.lock().unwrap().insert(event_id.clone(), Vec::new());
+        state.done.lock().unwrap().insert(event_id.clone(), None);
+    }
+
+    let lines_c = state.lines.clone();
+    let done_c = state.done.clone();
+    let event_id_c = event_id.clone();
+
+    let sidecar = app
+        .shell()
+        .sidecar("videotools-ffmpeg")
+        .map_err(|e| format!("Failed to spawn native sidecar: {}", e))?;
+
+    let command = sidecar.args(args);
+
+    let (mut rx, mut child) = command
+        .spawn()
+        .map_err(|e| format!("Failed to start process: {}", e))?;
+
+    tauri::async_runtime::spawn(async move {
+        while let Some(event) = rx.recv().await {
+            match event {
+                CommandEvent::Stdout(line_bytes) => {
+                    let line = String::from_utf8_lossy(&line_bytes).to_string();
+                    lines_c.lock().unwrap().entry(event_id_c.clone()).or_default().push(line);
+                }
+                CommandEvent::Stderr(line_bytes) => {
+                    let line = String::from_utf8_lossy(&line_bytes).to_string();
+                    lines_c.lock().unwrap().entry(event_id_c.clone()).or_default().push(line);
+                }
+                CommandEvent::Terminated(payload) => {
+                    let exit_code = payload.code.unwrap_or(0);
+                    done_c.lock().unwrap().insert(event_id_c.clone(), Some(exit_code));
+                    break;
+                }
+                _ => {}
+            }
+        }
+    });
+
+    Ok(())
+}
+
 #[tauri::command]
 fn get_sidecar_path(app: tauri::AppHandle, name: String) -> Result<String, String> {
     let target_triple = if cfg!(target_arch = "x86_64") {
@@ -332,6 +386,7 @@ pub fn run() {
             ensure_ytdlp_path,
             get_sidecar_path,
             list_files_in_folder,
+            run_ffmpeg_sidecar,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

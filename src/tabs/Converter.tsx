@@ -161,15 +161,6 @@ export default function Converter({
     const hasInput = sourceMode === "folder" ? !!folder : files.length > 0;
     if (!hasInput || isRunning) return;
 
-    let ffmpegPath: string;
-    try {
-      ffmpegPath = await invoke<string>("get_sidecar_path", { name: "videotools-ffmpeg" });
-    } catch (e) {
-      console.error("Failed to find bundled ffmpeg sidecar:", e);
-      alert(`Initialization Error:\n${e}`); // ◄ Now you will see exactly why it failed!
-      return;
-    }
-
     let inputFiles = [...files];
     if (sourceMode === "folder") {
       try {
@@ -179,7 +170,6 @@ export default function Converter({
           extensions: allowedExtensions 
         });
       } catch (e) {
-        console.error("Failed to read folder contents:", e);
         alert(`Folder Read Error:\n${e}`);
         return;
       }
@@ -193,18 +183,14 @@ export default function Converter({
     for (let i = 0; i < inputFiles.length; i++) {
       const inputFile = inputFiles[i];
       
-      // Determine Output Directory
       let outputDir = outDir;
       if (!outputDir) {
-        // Fallback to same directory as input file
         const lastSlash = Math.max(inputFile.lastIndexOf("/"), inputFile.lastIndexOf("\\"));
         outputDir = lastSlash !== -1 ? inputFile.substring(0, lastSlash) : ".";
       }
 
-      // Get input file name without extension
       const baseName = inputFile.split(/[\\/]/).pop()?.split('.').slice(0, -1).join('.') ?? "output";
       
-      // Determine destination extension
       let destExt = targetFormat;
       if (tab === "codec") {
         if (codecMode.startsWith("prores") || codecMode === "clip" || codecMode === "edit" || codecMode === "color" || codecMode === "quality") {
@@ -221,7 +207,6 @@ export default function Converter({
       }
 
       const outputFile = `${outputDir}/${baseName}_converted.${destExt}`;
-
       const args: string[] = ["-y", "-i", inputFile];
 
       if (tab === "format") {
@@ -270,7 +255,14 @@ export default function Converter({
       }
       args.push(outputFile);
 
-      start(ffmpegPath, args, false);
+      try {
+          await invoke("run_ffmpeg_sidecar", {
+            args: args,
+            eventId: "converter"
+          });
+        } catch (err) {
+          alert(`Failed to run conversion:\n${err}`);
+      }
     }
   };
 
