@@ -1,31 +1,31 @@
 {
-  "version": "1.3.6",
-  "notes": "See https://github.com/FarLostBrand/VideoTools/releases/tag/v1.3.6",
-  "pub_date": "2026-07-15T00:46:14Z",
+  "version": "1.3.7",
+  "notes": "See https://github.com/FarLostBrand/VideoTools/releases/tag/v1.3.7",
+  "pub_date": "2026-07-15T01:16:37Z",
   "platforms": {
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT01EQVJUQ0RDc3BucmRDaXJJSkVMY05JTHJ2VmVoblI2dmU2cFkxUEhZRzhuQzRuUFFJanl1YVFhUGVOQ3lTUHpoRlVqK1lMMy9Ya0ZVWXRVeCtkOXcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzcyCWZpbGU6bGludXgudGFyLmd6Ck1uSWRka0FyU2MwdDBVdGhJSlBkcHVoQ3d4ck1qeU85dnlsaTB3aGtkMHh4VmtmMDV6QWtwcXJIRlBtVEc2SHNxQzl4UjR1N3RoVzRtZFR6SEJDdUF3PT0K",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_1.3.6_amd64.AppImage.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0lvN09xSGE3VmdpUEUyRDFtMTREOVU5WlI1YUpTQnhnL3FzbjdOL1pFVTVIblhMbmFwQm5JLzZBVjJtWVAzTXk3eVd3TXBpZXMvditmZDhvUTc3VndnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk2CWZpbGU6bGludXgudGFyLmd6CkFyYlRZYVE2aU0vRzRZUEZvUDZuTWtwTldXdHpaaHBDeTM5YTIyNFk0ZEtWSVR2cm94a3dwb0g3ZlRMUEJ3VUNZbitjNkZrZCtncHM0TlI5TllNR0NBPT0K",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_1.3.7_amd64.AppImage.tar.gz"
     },
     "darwin-universal": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0Y1eVJzQ3J3ZmhQc1FCK2ZxK2owVENhckcwRTlpYmdGWkt3TmVoeWROT0hWTS96RjN3a0hjWjF3b1ZRNEJZSmtIKzA4eUdtd0xPV3NTYUJZajg5OGd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzczCWZpbGU6bWFjb3MudGFyLmd6CnJMREM0TzhuRWJrOUR6UW5tQVd5VFBkeE82UTh2eEFUZWhPNVdDV0FuZDlDTHFxcmxUZUF0M0RHWithYXFvaG14ajlaU2lBM2k2NitnczcwRGh4d0RBPT0K",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_universal.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0FvaEFkNW5DT05sWldQZWRnSTRDWkhpRENCbU5CVm00UnUvNiswcC9RSGtQRWlvVVFxRlYxQUpER2FzNUhzRUE3OWR0OHJkaWp2cVl0RXRaUGo3RUFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk3CWZpbGU6bWFjb3MudGFyLmd6CjEybmNycnRhaGo0QnNjZnR5UUxZZkFVWmRuSXc1R1hzOTF1N0lieEpzYWg2R1RGUmxJV2dqRTZpM25MNUpQdHROOVl6TXhFdXFuSFZXdlJYZ1NodERBPT0K",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_universal.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0Y1eVJzQ3J3ZmhQc1FCK2ZxK2owVENhckcwRTlpYmdGWkt3TmVoeWROT0hWTS96RjN3a0hjWjF3b1ZRNEJZSmtIKzA4eUdtd0xPV3NTYUJZajg5OGd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzczCWZpbGU6bWFjb3MudGFyLmd6CnJMREM0TzhuRWJrOUR6UW5tQVd5VFBkeE82UTh2eEFUZWhPNVdDV0FuZDlDTHFxcmxUZUF0M0RHWithYXFvaG14ajlaU2lBM2k2NitnczcwRGh4d0RBPT0K",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_universal.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0FvaEFkNW5DT05sWldQZWRnSTRDWkhpRENCbU5CVm00UnUvNiswcC9RSGtQRWlvVVFxRlYxQUpER2FzNUhzRUE3OWR0OHJkaWp2cVl0RXRaUGo3RUFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk3CWZpbGU6bWFjb3MudGFyLmd6CjEybmNycnRhaGo0QnNjZnR5UUxZZkFVWmRuSXc1R1hzOTF1N0lieEpzYWg2R1RGUmxJV2dqRTZpM25MNUpQdHROOVl6TXhFdXFuSFZXdlJYZ1NodERBPT0K",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_universal.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0Y1eVJzQ3J3ZmhQc1FCK2ZxK2owVENhckcwRTlpYmdGWkt3TmVoeWROT0hWTS96RjN3a0hjWjF3b1ZRNEJZSmtIKzA4eUdtd0xPV3NTYUJZajg5OGd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzczCWZpbGU6bWFjb3MudGFyLmd6CnJMREM0TzhuRWJrOUR6UW5tQVd5VFBkeE82UTh2eEFUZWhPNVdDV0FuZDlDTHFxcmxUZUF0M0RHWithYXFvaG14ajlaU2lBM2k2NitnczcwRGh4d0RBPT0K",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_universal.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0FvaEFkNW5DT05sWldQZWRnSTRDWkhpRENCbU5CVm00UnUvNiswcC9RSGtQRWlvVVFxRlYxQUpER2FzNUhzRUE3OWR0OHJkaWp2cVl0RXRaUGo3RUFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk3CWZpbGU6bWFjb3MudGFyLmd6CjEybmNycnRhaGo0QnNjZnR5UUxZZkFVWmRuSXc1R1hzOTF1N0lieEpzYWg2R1RGUmxJV2dqRTZpM25MNUpQdHROOVl6TXhFdXFuSFZXdlJYZ1NodERBPT0K",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_universal.app.tar.gz"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0p2MEJYVHk2RGU1ejFCYnNXbDkweVRYTDhRQW9jazZSUFF4dkdleUpZN1pLMTVaVG5weWVGamhVKzhqZEpSUnFId1lKRlBqNHVyUDZBdnFWSk80T3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzczCWZpbGU6d2luZG93cy5leGUKa1Z2Wk5va2dYZmorakJxcGdyQks5eTlVc2V3UVliNCtEa3hVZi9ZQzFkUjJkZEJkUWtzb0NNSXgwaVZWV3J3cXlUNEFKQW5KS2lDMjRETkY0VTNBQXc9PQo=",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_1.3.6_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0p0R29CeUVqNnRrMkdBV3RvNGxkOFVQR3A1d3JaM3R6S09uWVNaczZsYVBYUXhWL2RvaW5LUmIzUEp0N1JZNW5CWGlESkc5Vit1dTlkTEpiUFJ1ZUFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk3CWZpbGU6d2luZG93cy5leGUKR3d3VGdnaUVYNnBmcHV0L2xKUFY5WGMrUk9KRWVqQXViUXRhdzA5cG94NEVxVkJoUkVrWWE0bFpxMEFQdDlnRlRhOTF2TFA2NytIVUV3TytVYys5REE9PQo=",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_1.3.7_x64-setup.exe"
     },
     "windows-i686": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0p2MEJYVHk2RGU1ejFCYnNXbDkweVRYTDhRQW9jazZSUFF4dkdleUpZN1pLMTVaVG5weWVGamhVKzhqZEpSUnFId1lKRlBqNHVyUDZBdnFWSk80T3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc2MzczCWZpbGU6d2luZG93cy5leGUKa1Z2Wk5va2dYZmorakJxcGdyQks5eTlVc2V3UVliNCtEa3hVZi9ZQzFkUjJkZEJkUWtzb0NNSXgwaVZWV3J3cXlUNEFKQW5KS2lDMjRETkY0VTNBQXc9PQo=",
-      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.6/VideoTools_1.3.6_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSTVI5WXRVVkpqT0p0R29CeUVqNnRrMkdBV3RvNGxkOFVQR3A1d3JaM3R6S09uWVNaczZsYVBYUXhWL2RvaW5LUmIzUEp0N1JZNW5CWGlESkc5Vit1dTlkTEpiUFJ1ZUFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0MDc4MTk3CWZpbGU6d2luZG93cy5leGUKR3d3VGdnaUVYNnBmcHV0L2xKUFY5WGMrUk9KRWVqQXViUXRhdzA5cG94NEVxVkJoUkVrWWE0bFpxMEFQdDlnRlRhOTF2TFA2NytIVUV3TytVYys5REE9PQo=",
+      "url": "https://github.com/FarLostBrand/VideoTools/releases/download/v1.3.7/VideoTools_1.3.7_x64-setup.exe"
     }
   }
 }
