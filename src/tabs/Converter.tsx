@@ -102,7 +102,7 @@ export default function Converter({
 }: {
   bodyRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { state, isRunning, cancel, clearLines } =
+  const { state, isRunning, start, cancel, clearLines } =
     useProcess("converter");
 
   const [tab, setTab] = useState<ConverterTab>("format");
@@ -179,10 +179,10 @@ export default function Converter({
       alert("No valid media files found to convert.");
       return;
     }
-    
+
     for (let i = 0; i < inputFiles.length; i++) {
       const inputFile = inputFiles[i];
-      
+
       let outputDir = outDir;
       if (!outputDir) {
         const lastSlash = Math.max(inputFile.lastIndexOf("/"), inputFile.lastIndexOf("\\"));
@@ -190,7 +190,7 @@ export default function Converter({
       }
 
       const baseName = inputFile.split(/[\\/]/).pop()?.split('.').slice(0, -1).join('.') ?? "output";
-      
+
       let destExt = targetFormat;
       if (tab === "codec") {
         if (codecMode.startsWith("prores") || codecMode === "clip" || codecMode === "edit" || codecMode === "color" || codecMode === "quality") {
@@ -237,32 +237,20 @@ export default function Converter({
         } else if (codecMode === "h265") {
           args.push("-c:v", "libx265", "-crf", String(crf), "-pix_fmt", "yuv420p10le");
         } else if (codecMode === "clip") {
-          // ProRes Proxy
           args.push("-c:v", "prores_ks", "-profile:v", "0", "-vendor", "apl0", "-bits_per_mb", "8000", "-pix_fmt", "yuv422p10le");
         } else if (codecMode === "edit") {
-          // ProRes LT / Standard (ProRes 422)
           args.push("-c:v", "prores_ks", "-profile:v", "2", "-vendor", "apl0", "-pix_fmt", "yuv422p10le");
         } else if (codecMode === "color") {
-          // ProRes HQ
           args.push("-c:v", "prores_ks", "-profile:v", "3", "-vendor", "apl0", "-pix_fmt", "yuv422p10le");
         } else if (codecMode === "quality") {
-          // ProRes 4444 (with Alpha support)
           args.push("-c:v", "prores_ks", "-profile:v", "4", "-vendor", "apl0", "-pix_fmt", "yuva444p10le");
         } else if (codecMode === "main") {
-          // DNxHR HQ
           args.push("-c:v", "dnxhd", "-profile:v", "dnxhr_hq", "-pix_fmt", "yuv422p");
         }
       }
       args.push(outputFile);
 
-      try {
-          await invoke("run_ffmpeg_sidecar", {
-            args: args,
-            eventId: "converter"
-          });
-        } catch (err) {
-          alert(`Failed to run conversion:\n${err}`);
-      }
+      start("videotools-ffmpeg", args, false);
     }
   };
 

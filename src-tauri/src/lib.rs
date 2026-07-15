@@ -279,6 +279,7 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 fn start_process(
+    app: tauri::AppHandle,
     state: tauri::State<AppState>,
     program: String,
     args: Vec<String>,
@@ -290,47 +291,87 @@ fn start_process(
     }
     let lines_c = state.lines.clone();
     let done_c  = state.done.clone();
-    let full_path = resolve_path();
+    let event_id_c = event_id.clone();
 
-    std::thread::spawn(move || {
-        let result = std::process::Command::new(&program)
-            .args(&args)
-            .env("PATH", &full_path)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn();
+    // Determine if we are launching our bundled ffmpeg sidecar or another file
+    let is_ffmpeg = program.contains("videotools-ffmpeg");
 
-        let mut child = match result {
-            Ok(c) => c,
-            Err(e) => {
-                lines_c.lock().unwrap().entry(event_id.clone()).or_default()
-                    .push(format!("[ERROR] Failed to start '{}': {}", program, e));
-                done_c.lock().unwrap().insert(event_id, Some(-1));
-                return;
-            }
-        };
+    if is_ffmpeg {
+        // Run the sidecar safely using Tauri's native Shell plugin
+        let sidecar = app
+            .shell()
+            .sidecar("videotools-ffmpeg")
+            .map_err(|e| format!("Failed to spawn native sidecar: {}", e))?;
 
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
+        let command = sidecar.args(&args);
 
-        let l1 = lines_c.clone(); let e1 = event_id.clone();
-        let t1 = std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines().flatten() {
-                l1.lock().unwrap().entry(e1.clone()).or_default().push(line);
+        let (mut rx, mut _child) = command
+            .spawn()
+            .map_err(|e| format!("Failed to start sidecar: {}", e))?;
+
+        tauri::async_runtime::spawn(async move {
+            while let Some(event) = rx.recv().await {
+                match event {
+                    CommandEvent::Stdout(line_bytes) => {
+                        let line = String::from_utf8_lossy(&line_bytes).to_string();
+                        lines_c.lock().unwrap().entry(event_id_c.clone()).or_default().push(line);
+                    }
+                    CommandEvent::Stderr(line_bytes) => {
+                        let line = String::from_utf8_lossy(&line_bytes).to_string();
+                        lines_c.lock().unwrap().entry(event_id_c.clone()).or_default().push(line);
+                    }
+                    CommandEvent::Terminated(payload) => {
+                        let exit_code = payload.code.unwrap_or(0);
+                        done_c.lock().unwrap().insert(event_id_c.clone(), Some(exit_code));
+                        break;
+                    }
+                    _ => {}
+                }
             }
         });
-        let l2 = lines_c.clone(); let e2 = event_id.clone();
-        let t2 = std::thread::spawn(move || {
-            for line in BufReader::new(stderr).lines().flatten() {
-                l2.lock().unwrap().entry(e2.clone()).or_default().push(line);
-            }
-        });
+    } else {
+        // Fallback: Run external tools (like local scripts or yt-dlp) as normal threads
+        let full_path = resolve_path();
+        std::thread::spawn(move || {
+            let result = std::process::Command::new(&program)
+                .args(&args)
+                .env("PATH", &full_path)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn();
 
-        let _ = t1.join();
-        let _ = t2.join();
-        let code = child.wait().map(|s| s.code().unwrap_or(-1)).unwrap_or(-1);
-        done_c.lock().unwrap().insert(event_id, Some(code));
-    });
+            let mut child = match result {
+                Ok(c) => c,
+                Err(e) => {
+                    lines_c.lock().unwrap().entry(event_id_c.clone()).or_default()
+                        .push(format!("[ERROR] Failed to start '{}': {}", program, e));
+                    done_c.lock().unwrap().insert(event_id_c, Some(-1));
+                    return;
+                }
+            };
+
+            let stdout = child.stdout.take().unwrap();
+            let stderr = child.stderr.take().unwrap();
+
+            let l1 = lines_c.clone(); let e1 = event_id_c.clone();
+            let t1 = std::thread::spawn(move || {
+                for line in BufReader::new(stdout).lines().flatten() {
+                    l1.lock().unwrap().entry(e1.clone()).or_default().push(line);
+                }
+            });
+            let l2 = lines_c.clone(); let e2 = event_id_c.clone();
+            let t2 = std::thread::spawn(move || {
+                for line in BufReader::new(stderr).lines().flatten() {
+                    l2.lock().unwrap().entry(e2.clone()).or_default().push(line);
+                }
+            });
+
+            let _ = t1.join();
+            let _ = t2.join();
+            let code = child.wait().map(|s| s.code().unwrap_or(-1)).unwrap_or(-1);
+            done_c.lock().unwrap().insert(event_id_c, Some(code));
+        });
+    }
 
     Ok(())
 }
