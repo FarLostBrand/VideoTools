@@ -102,7 +102,7 @@ export default function Converter({
 }: {
   bodyRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { state, isRunning, start, cancel, clearLines } =
+  const { state, isRunning, cancel, clearLines } =
     useProcess("converter");
 
   const [tab, setTab] = useState<ConverterTab>("format");
