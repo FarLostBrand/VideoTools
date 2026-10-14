@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getSetting, setSetting } from "../lib/store";
+import { runCommand } from "../lib/runner";
 import type React from "react";
 
 interface PathFieldProps {
@@ -41,6 +42,8 @@ type UpdateStatus =
   | "installing"
   | "error";
 
+type YtdlpStatus = "idle" | "updating" | "done" | "error";
+
 const platform = navigator.userAgent.toLowerCase();
 const isLinux = platform.includes("linux");
 const isMac = platform.includes("mac");
@@ -56,6 +59,9 @@ export default function Settings({
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState("");
+
+  const [ytdlpStatus, setYtdlpStatus] = useState<YtdlpStatus>("idle");
+  const [ytdlpMsg, setYtdlpMsg] = useState("");
 
   const RELEASES_URL =
     "https://github.com/FarLostBrand/VideoTools/releases/latest";
@@ -89,6 +95,31 @@ export default function Settings({
 
   const openReleases = () => {
     invoke("open_url", { url: RELEASES_URL }).catch(() => {});
+  };
+
+  // Updates the managed yt-dlp binary the Downloader tab uses
+  const updateYtdlp = async () => {
+    setYtdlpStatus("updating");
+    setYtdlpMsg("");
+    try {
+      const bin = await invoke<string>("ensure_ytdlp_path");
+      const lines: string[] = [];
+      runCommand(bin, ["-U"], {
+        onLine: (l) => lines.push(l),
+        onDone: (code) => {
+          setYtdlpMsg(
+            lines
+              .filter((l) => l.trim())
+              .slice(-3)
+              .join("\n")
+          );
+          setYtdlpStatus(code === 0 ? "done" : "error");
+        },
+      });
+    } catch (e) {
+      setYtdlpMsg(String(e));
+      setYtdlpStatus("error");
+    }
   };
 
   const statusLabel: Record<UpdateStatus, string> = {
@@ -200,6 +231,55 @@ export default function Settings({
             {updateStatus === "error" && (
               <span style={{ fontSize: 11.5, color: "var(--red)" }}>
                 {updateError}
+              </span>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              className="btn btn-secondary"
+              disabled={ytdlpStatus === "updating"}
+              onClick={updateYtdlp}
+            >
+              {ytdlpStatus === "updating" ? (
+                <>
+                  <span
+                    className="pulse"
+                    style={{ display: "inline-block", marginRight: 6 }}
+                  />
+                  Updating yt-dlp…
+                </>
+              ) : (
+                "Update yt-dlp"
+              )}
+            </button>
+            {ytdlpStatus === "done" && (
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: "var(--green)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                ✓ {ytdlpMsg || "yt-dlp updated"}
+              </span>
+            )}
+            {ytdlpStatus === "error" && (
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: "var(--red)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {ytdlpMsg}
               </span>
             )}
           </div>
